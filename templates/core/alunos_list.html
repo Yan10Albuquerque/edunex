@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Alunos | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-people-fill"></i> Cadastro de alunos</span>
+            <h1 class="page-title">Alunos</h1>
+            <p class="page-subtitle">Encontre rapidamente responsáveis, contatos e histórico de cadastro em uma lista mais clara e fácil de navegar.</p>
+        </div>
+        <div class="page-actions">
+            <span class="soft-badge brand"><i class="bi bi-person-vcard"></i> {{ alunos|length }} aluno{{ alunos|length|pluralize }}</span>
+            <a href="{% url 'aluno_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Novo aluno</a>
+        </div>
+    </section>
+
+    <section class="surface-card">
+        <div class="toolbar">
+            <div>
+                <h2 class="section-title">Busca inteligente</h2>
+                <p class="section-copy">Pesquise por nome do aluno, responsável ou número de telefone.</p>
+            </div>
+            <form method="get">
+                <input type="text" name="busca" class="form-control" placeholder="Ex.: Maria, Ana Souza ou 11999999999" value="{{ busca }}">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
+                {% if busca %}<a href="{% url 'alunos_list' %}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Limpar</a>{% endif %}
+            </form>
+        </div>
+    </section>
+
+    <section class="surface-card">
+        <div class="surface-head">
+            <div>
+                <h2 class="section-title">Lista de alunos</h2>
+                <p class="section-copy">Visual profissional, leitura mais rápida e ações diretas por registro.</p>
+            </div>
+        </div>
+
+        {% if alunos %}
+        <div class="table-shell table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Aluno</th>
+                        <th>Responsável</th>
+                        <th>Telefone</th>
+                        <th>Email</th>
+                        <th>Cadastro</th>
+                        <th class="text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aluno in alunos %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'aluno_detail' aluno.pk %}" class="record-title">
+                                <span class="record-avatar">{{ aluno.nome|slice:":1" }}</span>
+                                <span class="record-meta">
+                                    <strong>{{ aluno.nome }}</strong>
+                                    <span>Perfil do aluno</span>
+                                </span>
+                            </a>
+                        </td>
+                        <td>{{ aluno.responsavel }}</td>
+                        <td>{{ aluno.telefone }}</td>
+                        <td>{{ aluno.email|default:"Nao informado" }}</td>
+                        <td>{{ aluno.data_criacao|date:"d/m/Y" }}</td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{% url 'aluno_detail' aluno.pk %}" class="btn btn-outline-primary" title="Ver detalhes"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'aluno_update' aluno.pk %}" class="btn btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                                <a href="{% url 'aluno_delete' aluno.pk %}" class="btn btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="bi bi-person-plus"></i></div>
+            <h5>Nenhum aluno encontrado</h5>
+            <p>Crie o primeiro cadastro para começar a organizar responsáveis, contatos e mensalidades em um fluxo único.</p>
+            <div class="mt-4">
+                <a href="{% url 'aluno_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Cadastrar aluno</a>
+            </div>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

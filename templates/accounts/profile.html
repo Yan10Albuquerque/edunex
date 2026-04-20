@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Perfil | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-sliders"></i> Configurações</span>
+            <h1 class="page-title">Meu perfil</h1>
+            <p class="page-subtitle">Atualize os dados da escola e mantenha a conta alinhada com a identidade do seu negócio.</p>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <section class="surface-card">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label">Usuário</label>
+                            <input type="text" class="form-control" value="{{ user.username }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="escola_nome" class="form-label">Nome da escola</label>
+                            <input type="text" class="form-control" id="escola_nome" name="escola_nome" value="{{ profile.escola_nome }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="telefone" class="form-label">Telefone</label>
+                            <input type="tel" class="form-control" id="telefone" name="telefone" value="{{ profile.telefone }}">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 flex-wrap mt-4">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Salvar alterações</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <div class="col-lg-4">
+            <section class="surface-card h-100">
+                <div class="surface-head">
+                    <div>
+                        <h2 class="section-title">Resumo da conta</h2>
+                        <p class="section-copy">Informações do plano e status atual.</p>
+                    </div>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Plano</label>
+                        <span class="soft-badge brand">{{ profile.get_plano_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Status</label>
+                        {% if profile.ativo %}
+                        <span class="status-badge pago"><i class="bi bi-check-circle-fill"></i> Ativo</span>
+                        {% else %}
+                        <span class="status-badge atrasado"><i class="bi bi-x-circle-fill"></i> Inativo</span>
+                        {% endif %}
+                    </div>
+                    <div class="info-item">
+                        <label>Membro desde</label>
+                        <strong>{{ profile.data_criacao|date:"d/m/Y" }}</strong>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

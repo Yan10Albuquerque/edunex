@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Marcar como Pago | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-check-circle"></i> Confirmação</span>
+            <h1 class="page-title">Marcar como paga</h1>
+            <p class="page-subtitle">Confirme o recebimento para atualizar o status da cobrança e, se houver recorrência, gerar a próxima mensalidade.</p>
+        </div>
+    </section>
+
+    <section class="surface-card">
+        <div class="info-grid mb-4">
+            <div class="info-item"><label>Aluno</label><strong>{{ mensalidade.aluno.nome }}</strong></div>
+            <div class="info-item"><label>Valor</label><span>R$ {{ mensalidade.valor|floatformat:2 }}</span></div>
+            <div class="info-item"><label>Vencimento</label><span>{{ mensalidade.data_vencimento|date:"d/m/Y" }}</span></div>
+        </div>
+
+        <form method="post" class="d-flex gap-2 flex-wrap">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Confirmar pagamento</button>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if edit %}Editar{% else %}Nova{% endif %} Mensalidade | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-cash-stack"></i> Financeiro</span>
+            <h1 class="page-title">{% if edit %}Editar mensalidade{% else %}Nova mensalidade{% endif %}</h1>
+            <p class="page-subtitle">Configure valor, vencimento e recorrência em um formulário mais claro para evitar erros operacionais.</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
+        </div>
+    </section>
+
+    <section class="surface-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-4">
+                <div class="col-md-6">
+                    {% if not edit %}
+                    <label for="aluno" class="form-label">Aluno</label>
+                    <select class="form-select" id="aluno" name="aluno" required>
+                        <option value="">Selecione um aluno</option>
+                        {% for a in alunos %}
+                        <option value="{{ a.pk }}" {% if aluno.pk == a.pk %}selected{% endif %}>{{ a.nome }}</option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <label class="form-label">Aluno</label>
+                    <div class="info-item">
+                        <strong>{{ mensalidade.aluno.nome }}</strong>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                    <label for="valor" class="form-label">Valor</label>
+                    <input type="number" class="form-control" id="valor" name="valor" step="0.01" required value="{% if edit %}{{ mensalidade.valor }}{% endif %}">
+                </div>
+
+                <div class="col-md-6">
+                    <label for="data_vencimento" class="form-label">Data de vencimento</label>
+                    <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required value="{% if edit %}{{ mensalidade.data_vencimento|date:'Y-m-d' }}{% endif %}">
+                </div>
+
+                {% if edit %}
+                <div class="col-md-6">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status" required>
+                        <option value="pendente" {% if mensalidade.status == 'pendente' %}selected{% endif %}>Pendente</option>
+                        <option value="pago" {% if mensalidade.status == 'pago' %}selected{% endif %}>Pago</option>
+                        <option value="atrasado" {% if mensalidade.status == 'atrasado' %}selected{% endif %}>Atrasado</option>
+                    </select>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="surface-card compact mt-4">
+                <div class="surface-head mb-3">
+                    <div>
+                        <h2 class="section-title">Recorrência</h2>
+                        <p class="section-copy">Defina se a próxima mensalidade deve ser criada automaticamente após o pagamento.</p>
+                    </div>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="recorrente" name="recorrente" {% if edit and mensalidade.recorrente %}checked{% elif not edit %}checked{% endif %}>
+                    <label class="form-check-label" for="recorrente">Gerar próxima mensalidade automaticamente</label>
+                </div>
+
+                <label for="data_fim_recorrencia" class="form-label">Data final da recorrência</label>
+                <input type="date" class="form-control" id="data_fim_recorrencia" name="data_fim_recorrencia" value="{% if edit and mensalidade.data_fim_recorrencia %}{{ mensalidade.data_fim_recorrencia|date:'Y-m-d' }}{% endif %}">
+                <div class="form-text">Deixe vazio se a recorrência não tiver prazo de encerramento.</div>
+            </div>
+
+            <div class="d-flex gap-2 flex-wrap mt-4">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> {% if edit %}Salvar alterações{% else %}Criar mensalidade{% endif %}</button>
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

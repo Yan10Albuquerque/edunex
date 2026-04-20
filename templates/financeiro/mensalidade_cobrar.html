@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Cobrar via WhatsApp | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-whatsapp"></i> Cobrança</span>
+            <h1 class="page-title">Cobrar via WhatsApp</h1>
+            <p class="page-subtitle">Revise os dados da cobrança e envie uma mensagem pronta para o responsável sem sair do fluxo financeiro.</p>
+        </div>
+    </section>
+
+    <section class="surface-card">
+        <div class="info-grid mb-4">
+            <div class="info-item"><label>Aluno</label><strong>{{ mensalidade.aluno.nome }}</strong></div>
+            <div class="info-item"><label>Responsável</label><span>{{ mensalidade.aluno.responsavel }}</span></div>
+            <div class="info-item"><label>Telefone</label><span>{{ mensalidade.aluno.telefone }}</span></div>
+            <div class="info-item"><label>Cobrança</label><span>R$ {{ mensalidade.valor|floatformat:2 }} • {{ mensalidade.data_vencimento|date:"d/m/Y" }}</span></div>
+        </div>
+
+        <div class="surface-card compact">
+            <h2 class="section-title">Mensagem pronta</h2>
+            <p class="section-copy">{{ mensagem }}</p>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap mt-4">
+            <a href="{{ link_whatsapp }}" target="_blank" class="btn btn-success"><i class="bi bi-whatsapp"></i> Enviar no WhatsApp</a>
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Voltar</a>
+        </div>
+    </section>
+</div>
+{% endblock %}

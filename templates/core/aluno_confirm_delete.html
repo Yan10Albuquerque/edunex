@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Deletar Aluno | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-shield-exclamation"></i> Ação sensível</span>
+            <h1 class="page-title">Excluir aluno</h1>
+            <p class="page-subtitle">Essa ação remove o cadastro e também todas as mensalidades relacionadas. Revise com calma antes de confirmar.</p>
+        </div>
+    </section>
+
+    <section class="surface-card">
+        <div class="alert alert-danger mb-4">
+            <strong>Atenção:</strong> esta exclusão é permanente e não pode ser desfeita.
+        </div>
+
+        <div class="info-grid mb-4">
+            <div class="info-item">
+                <label>Aluno</label>
+                <strong>{{ aluno.nome }}</strong>
+            </div>
+            <div class="info-item">
+                <label>Responsável</label>
+                <span>{{ aluno.responsavel }}</span>
+            </div>
+            <div class="info-item">
+                <label>Telefone</label>
+                <span>{{ aluno.telefone }}</span>
+            </div>
+        </div>
+
+        <form method="post" class="d-flex gap-2 flex-wrap">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash"></i> Excluir definitivamente</button>
+            <a href="{% url 'alunos_list' %}" class="btn btn-outline-secondary">Cancelar</a>
+        </form>
+    </section>
+</div>
+{% endblock %}

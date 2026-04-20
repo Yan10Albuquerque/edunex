@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ aluno.nome }} | Edunex{% endblock %}
+
+{% block content %}
+<div class="page-shell">
+    <section class="page-header">
+        <div>
+            <span class="page-eyebrow"><i class="bi bi-person-lines-fill"></i> Perfil do aluno</span>
+            <h1 class="page-title">{{ aluno.nome }}</h1>
+            <p class="page-subtitle">Veja rapidamente os dados de contato e acompanhe todas as mensalidades vinculadas a este cadastro.</p>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'aluno_update' aluno.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Editar</a>
+            <a href="{% url 'mensalidade_create' %}?aluno_id={{ aluno.pk }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nova mensalidade</a>
+        </div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <section class="surface-card h-100">
+                <div class="surface-head">
+                    <div>
+                        <h2 class="section-title">Informações principais</h2>
+                        <p class="section-copy">Contato centralizado para acesso rápido.</p>
+                    </div>
+                    <span class="soft-badge brand"><i class="bi bi-calendar-event"></i> {{ aluno.data_criacao|date:"d/m/Y" }}</span>
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Responsável</label>
+                        <strong>{{ aluno.responsavel }}</strong>
+                    </div>
+                    <div class="info-item">
+                        <label>Telefone</label>
+                        <span>{{ aluno.telefone }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Email</label>
+                        <span>{{ aluno.email|default:"Nao informado" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Ações rápidas</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="https://wa.me/{{ aluno.telefone }}" target="_blank" class="btn btn-outline-success btn-sm"><i class="bi bi-whatsapp"></i></a>
+                            {% if aluno.email %}<a href="mailto:{{ aluno.email }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-envelope"></i></a>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-8">
+            <section class="surface-card">
+                <div class="surface-head">
+                    <div>
+                        <h2 class="section-title">Mensalidades vinculadas</h2>
+                        <p class="section-copy">Situação financeira do aluno em uma única visão.</p>
+                    </div>
+                    <span class="soft-badge"><i class="bi bi-receipt"></i> {{ mensalidades|length }} registro{{ mensalidades|length|pluralize }}</span>
+                </div>
+
+                {% if mensalidades %}
+                <div class="table-shell table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Valor</th>
+                                <th>Vencimento</th>
+                                <th>Status</th>
+                                <th class="text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mensalidade in mensalidades %}
+                            <tr>
+                                <td>R$ {{ mensalidade.valor|floatformat:2 }}</td>
+                                <td>{{ mensalidade.data_vencimento|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if mensalidade.status == 'pago' %}
+                                    <span class="status-badge pago"><i class="bi bi-check-circle-fill"></i> Pago</span>
+                                    {% elif mensalidade.status == 'atrasado' %}
+                                    <span class="status-badge atrasado"><i class="bi bi-exclamation-triangle-fill"></i> Atrasado</span>
+                                    {% else %}
+                                    <span class="status-badge pendente"><i class="bi bi-clock-fill"></i> Pendente</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        {% if mensalidade.status != 'pago' %}
+                                        <a href="{% url 'mensalidade_cobrar' mensalidade.pk %}" class="btn btn-outline-success" title="Cobrar"><i class="bi bi-whatsapp"></i></a>
+                                        <a href="{% url 'mensalidade_pagar' mensalidade.pk %}" class="btn btn-outline-primary" title="Marcar pago"><i class="bi bi-check-lg"></i></a>
+                                        {% endif %}
+                                        <a href="{% url 'mensalidade_update' mensalidade.pk %}" class="btn btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
+                                        <a href="{% url 'mensalidade_delete' mensalidade.pk %}" class="btn btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-cash-stack"></i></div>
+                    <h5>Nenhuma mensalidade cadastrada</h5>
+                    <p>Cadastre a primeira cobrança para começar o acompanhamento financeiro deste aluno.</p>
+                    <div class="mt-4">
+                        <a href="{% url 'mensalidade_create' %}?aluno_id={{ aluno.pk }}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Criar mensalidade</a>
+                    </div>
+                </div>
+                {% endif %}
+            </section>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{% url 'alunos_list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Voltar</a>
+        <a href="{% url 'aluno_delete' aluno.pk %}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Excluir aluno</a>
+    </div>
+</div>
+{% endblock %}
