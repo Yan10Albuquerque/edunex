@@ -6,7 +6,7 @@ from financeiro.views import dashboard
 urlpatterns = [
     path('admin/', admin.site.urls),
     
-    path('dashboard/', dashboard, name='home'),
+    path('', dashboard, name='home'),
     path('accounts/', include('accounts.urls')),
     path('alunos/', include('core.urls')),
     path('financeiro/', include('financeiro.urls')),
