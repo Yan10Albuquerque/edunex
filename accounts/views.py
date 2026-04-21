@@ -114,3 +114,10 @@ def upgrade(request):
     View para pagina de upgrade de plano
     """
     return render(request, 'accounts/upgrade.html')
+
+
+def vendas (request):
+    """
+    View para pagina de vendas
+    """
+    return render(request, 'vendas.html')
