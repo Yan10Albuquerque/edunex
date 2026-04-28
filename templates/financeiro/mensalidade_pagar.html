@@ -22,7 +22,7 @@
         <form method="post" class="d-flex gap-2 flex-wrap">
             {% csrf_token %}
             <button type="submit" class="btn btn-success"><i class="bi bi-check-lg"></i> Confirmar pagamento</button>
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <a href="{% url 'mensalidades_list' %}" class="btn btn-outline-secondary">Cancelar</a>
         </form>
     </section>
 </div>

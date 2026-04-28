@@ -8,11 +8,11 @@
         <div>
             <span class="page-eyebrow"><i class="bi bi-graph-up-arrow"></i> Visão financeira</span>
             <h1 class="page-title">Dashboard financeiro</h1>
-            <p class="page-subtitle">Acompanhe recebimentos, pendências e atrasos com uma leitura mais executiva e filtros rápidos por período.</p>
+            <p class="page-subtitle">Acompanhe recebimentos, pendências e atrasos com uma leitura mais executiva por período.</p>
         </div>
         <div class="page-actions">
             <span class="soft-badge brand"><i class="bi bi-calendar3"></i> {{ mes_selecionado }}</span>
-            <a href="{% url 'mensalidade_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Nova mensalidade</a>
+            <a href="{% url 'mensalidades_list' %}" class="btn btn-outline-primary"><i class="bi bi-receipt-cutoff"></i> Ver mensalidades</a>
         </div>
     </section>
 
@@ -37,8 +37,8 @@
     <section class="surface-card">
         <div class="toolbar">
             <div>
-                <h2 class="section-title">Filtros do período</h2>
-                <p class="section-copy">Troque o mês ou refine por status sem sair da tela.</p>
+                <h2 class="section-title">Período do resumo</h2>
+                <p class="section-copy">Troque o mês para recalcular os indicadores sem carregar a listagem completa.</p>
             </div>
             <form method="get">
                 <select name="mes" class="form-select" onchange="this.form.submit()">
@@ -46,95 +46,10 @@
                     <option value="{{ mes.valor }}" {% if mes.selecionado %}selected{% endif %}>{{ mes.label }}</option>
                     {% endfor %}
                 </select>
-                <select name="status" class="form-select" onchange="this.form.submit()">
-                    <option value="todos" {% if status_filter == 'todos' %}selected{% endif %}>Todos os status</option>
-                    <option value="pagos" {% if status_filter == 'pagos' %}selected{% endif %}>Pagos</option>
-                    <option value="pendentes" {% if status_filter == 'pendentes' %}selected{% endif %}>Pendentes</option>
-                    <option value="atrasados" {% if status_filter == 'atrasados' %}selected{% endif %}>Atrasados</option>
-                </select>
             </form>
         </div>
     </section>
 
-    <section class="surface-card">
-        <div class="surface-head">
-            <div>
-                <h2 class="section-title">Mensalidades</h2>
-                <p class="section-copy">Tabela mais legível, com status visuais e ações rápidas por cobrança.</p>
-            </div>
-            <span class="soft-badge"><i class="bi bi-receipt-cutoff"></i> {{ mensalidades|length }} cobrança{{ mensalidades|length|pluralize }}</span>
-        </div>
-
-        {% if mensalidades %}
-        <div class="table-shell table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Aluno</th>
-                        <th>Responsável</th>
-                        <th>Valor</th>
-                        <th>Vencimento</th>
-                        <th>Status</th>
-                        <th>Recorrência</th>
-                        <th class="text-end">Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for mensalidade in mensalidades %}
-                    <tr>
-                        <td>
-                            <a href="{% url 'aluno_detail' mensalidade.aluno.pk %}" class="record-title">
-                                <span class="record-avatar">{{ mensalidade.aluno.nome|slice:":1" }}</span>
-                                <span class="record-meta">
-                                    <strong>{{ mensalidade.aluno.nome }}</strong>
-                                    <span>Aluno vinculado</span>
-                                </span>
-                            </a>
-                        </td>
-                        <td>{{ mensalidade.aluno.responsavel }}</td>
-                        <td>R$ {{ mensalidade.valor|floatformat:2 }}</td>
-                        <td>{{ mensalidade.data_vencimento|date:"d/m/Y" }}</td>
-                        <td>
-                            {% if mensalidade.status == 'pago' %}
-                            <span class="status-badge pago"><i class="bi bi-check-circle-fill"></i> Pago</span>
-                            {% elif mensalidade.status == 'atrasado' %}
-                            <span class="status-badge atrasado"><i class="bi bi-exclamation-triangle-fill"></i> Atrasado</span>
-                            {% else %}
-                            <span class="status-badge pendente"><i class="bi bi-clock-fill"></i> Pendente</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if mensalidade.recorrente %}
-                            <span class="soft-badge brand"><i class="bi bi-arrow-repeat"></i> Ativa</span>
-                            {% else %}
-                            <span class="soft-badge warning"><i class="bi bi-pause-circle"></i> Unica</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group btn-group-sm" role="group">
-                                {% if mensalidade.status != 'pago' %}
-                                <a href="{% url 'mensalidade_cobrar' mensalidade.pk %}" class="btn btn-outline-success" title="Cobrar no WhatsApp"><i class="bi bi-whatsapp"></i></a>
-                                <a href="{% url 'mensalidade_pagar' mensalidade.pk %}" class="btn btn-outline-primary" title="Marcar como paga"><i class="bi bi-check-lg"></i></a>
-                                {% endif %}
-                                <a href="{% url 'mensalidade_update' mensalidade.pk %}" class="btn btn-outline-secondary" title="Editar"><i class="bi bi-pencil"></i></a>
-                                <a href="{% url 'mensalidade_delete' mensalidade.pk %}" class="btn btn-outline-danger" title="Excluir"><i class="bi bi-trash"></i></a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon"><i class="bi bi-journal-x"></i></div>
-            <h5>Nenhuma mensalidade encontrada</h5>
-            <p>Cadastre a primeira cobrança para começar a acompanhar entradas, pendências e atrasos com clareza.</p>
-            <div class="mt-4">
-                <a href="{% url 'mensalidade_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Criar mensalidade</a>
-            </div>
-        </div>
-        {% endif %}
-    </section>
+    
 </div>
 {% endblock %}

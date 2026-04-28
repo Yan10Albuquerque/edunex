@@ -12,22 +12,43 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from decouple import config
+from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def bool_config(name, default=False):
+    value = config(name, default=default)
+    if isinstance(value, bool):
+        return value
+
+    value = str(value).strip().lower()
+    if value in ('1', 'true', 'yes', 'on', 'debug', 'development', 'dev'):
+        return True
+    if value in ('0', 'false', 'no', 'off', 'release', 'production', 'prod', ''):
+        return False
+
+    return bool(default)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-no^m*(qh+hs#x!no55np591)0e)95zi@_2(#ql9y$v6fnhzjk2')
+SECRET_KEY = config(
+    'SECRET_KEY',
+    default='edunex-local-development-secret-key-change-me-2026-with-extra-length',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = bool_config('DEBUG', default=False)
 
-ALLOWED_HOSTS = ("127.0.0.1", "edunex-9c6x.onrender.com")
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='127.0.0.1,localhost,edunex-9c6x.onrender.com',
+    cast=Csv(),
+)
 
 
 # Application definition
@@ -82,7 +103,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if DEBUG == True:
+POSTGRES_HOST = config('POSTGRES_HOST', default='')
+
+if DEBUG or not POSTGRES_HOST:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -93,13 +116,13 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'postgres',  # Database name do Supabase
-            'USER': 'postgres.mszwtdqhdfqcnqeoasxq',  # Usuário
-            'PASSWORD': 'kf7YP5OLCbr7ka8c',  
-            'HOST': 'aws-1-us-east-2.pooler.supabase.com',
-            'PORT': '5432',
+            'NAME': config('POSTGRES_DB', default='postgres'),
+            'USER': config('POSTGRES_USER'),
+            'PASSWORD': config('POSTGRES_PASSWORD'),
+            'HOST': POSTGRES_HOST,
+            'PORT': config('POSTGRES_PORT', default='5432'),
             'OPTIONS': {
-                'sslmode': 'require',         # obrigatório no Render
+                'sslmode': config('POSTGRES_SSLMODE', default='require'),
             },
         }
     }
@@ -156,3 +179,21 @@ LOGOUT_REDIRECT_URL = 'login'
 # Media files
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Production security. On Render, set RENDER=True or override these flags
+# individually in the environment.
+IS_RENDER = bool_config('RENDER', default=False)
+SECURE_SSL_REDIRECT = bool_config('SECURE_SSL_REDIRECT', default=IS_RENDER)
+SESSION_COOKIE_SECURE = bool_config('SESSION_COOKIE_SECURE', default=IS_RENDER)
+CSRF_COOKIE_SECURE = bool_config('CSRF_COOKIE_SECURE', default=IS_RENDER)
+SECURE_HSTS_SECONDS = config(
+    'SECURE_HSTS_SECONDS',
+    default=31536000 if IS_RENDER else 0,
+    cast=int,
+)
+SECURE_HSTS_INCLUDE_SUBDOMAINS = bool_config(
+    'SECURE_HSTS_INCLUDE_SUBDOMAINS',
+    default=IS_RENDER,
+)
+SECURE_HSTS_PRELOAD = bool_config('SECURE_HSTS_PRELOAD', default=IS_RENDER)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

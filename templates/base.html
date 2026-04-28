@@ -632,9 +632,9 @@
                             <i class="bi bi-people-fill"></i>
                             Alunos
                         </a>
-                        <a class="nav-pill {% if request.resolver_match.url_name == 'mensalidade_create' %}active{% endif %}" href="{% url 'mensalidade_create' %}">
-                            <i class="bi bi-cash-coin"></i>
-                            Nova mensalidade
+                        <a class="nav-pill {% if 'mensalidade' in request.resolver_match.url_name and request.resolver_match.url_name != 'mensalidade_create' %}active{% endif %}" href="{% url 'mensalidades_list' %}">
+                            <i class="bi bi-receipt-cutoff"></i>
+                            Mensalidades
                         </a>
                         <a class="nav-pill {% if request.resolver_match.url_name == 'profile' %}active{% endif %}" href="{% url 'profile' %}">
                             <i class="bi bi-gear-fill"></i>
