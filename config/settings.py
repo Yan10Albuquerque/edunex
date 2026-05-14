@@ -11,7 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os
+from urllib.parse import parse_qsl, unquote, urlparse
+
 from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -46,7 +47,7 @@ DEBUG = bool_config('DEBUG', default=False)
 
 ALLOWED_HOSTS = config(
     'ALLOWED_HOSTS',
-    default='127.0.0.1,localhost,edunex-9c6x.onrender.com',
+    default='127.0.0.1,localhost,.onrender.com',
     cast=Csv(),
 )
 
@@ -103,29 +104,75 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-POSTGRES_HOST = config('POSTGRES_HOST', default='')
+def database_from_url(url):
+    parsed = urlparse(url)
+    scheme = parsed.scheme.lower()
 
-if DEBUG or not POSTGRES_HOST:
-    DATABASES = {
-        'default': {
+    if scheme == 'sqlite':
+        path = unquote(parsed.path)
+        return {
             'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'NAME': database_file_path(path) if path else BASE_DIR / 'db.sqlite3',
         }
-    }
-else:
-    DATABASES = {
-        'default': {
+
+    if scheme in ('postgres', 'postgresql'):
+        options = dict(parse_qsl(parsed.query))
+        sslmode = options.pop('sslmode', config('POSTGRES_SSLMODE', default='require'))
+        database = parsed.path.lstrip('/')
+
+        return {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('POSTGRES_DB', default='postgres'),
-            'USER': config('POSTGRES_USER'),
-            'PASSWORD': config('POSTGRES_PASSWORD'),
-            'HOST': POSTGRES_HOST,
-            'PORT': config('POSTGRES_PORT', default='5432'),
+            'NAME': unquote(database) if database else config('DB_NAME', default='postgres'),
+            'USER': unquote(parsed.username or ''),
+            'PASSWORD': unquote(parsed.password or ''),
+            'HOST': parsed.hostname or '',
+            'PORT': str(parsed.port or ''),
             'OPTIONS': {
-                'sslmode': config('POSTGRES_SSLMODE', default='require'),
+                'sslmode': sslmode,
+                **options,
             },
         }
+
+    raise ValueError(f'DATABASE_URL usa um banco nao suportado: {scheme}')
+
+
+def database_from_env():
+    database_url = config('DATABASE_URL', default='')
+    if database_url:
+        return database_from_url(database_url)
+
+    db_engine = config('DB_ENGINE', default='').lower()
+    db_host = config('DB_HOST', default=config('POSTGRES_HOST', default=''))
+
+    if db_engine in ('postgres', 'postgresql') or db_host:
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default=config('POSTGRES_DB', default='postgres')),
+            'USER': config('DB_USER', default=config('POSTGRES_USER', default='')),
+            'PASSWORD': config('DB_PASSWORD', default=config('POSTGRES_PASSWORD', default='')),
+            'HOST': db_host,
+            'PORT': config('DB_PORT', default=config('POSTGRES_PORT', default='5432')),
+            'OPTIONS': {
+                'sslmode': config('DB_SSLMODE', default=config('POSTGRES_SSLMODE', default='require')),
+            },
+        }
+
+    return {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': database_file_path(config('SQLITE_NAME', default='db.sqlite3')),
     }
+
+
+def database_file_path(value):
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    return BASE_DIR / path
+
+
+DATABASES = {
+    'default': database_from_env(),
+}
 
 
 # Password validation
