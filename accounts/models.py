@@ -1,5 +1,3 @@
-from datetime import timedelta, timezone
-
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -24,6 +22,11 @@ class UserProfile(models.Model):
         verbose_name='Plano'
     )
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
+    visitante = models.BooleanField(
+        default=False,
+        verbose_name='Conta de visitante',
+        help_text='Conta temporaria com dados ficticios, criada pelo modo visitante.',
+    )
     data_criacao = models.DateTimeField(auto_now_add=True)
     
     class Meta:

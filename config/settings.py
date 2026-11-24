@@ -93,6 +93,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.modo_visitante',
             ],
         },
     },
@@ -244,3 +245,13 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = bool_config(
 )
 SECURE_HSTS_PRELOAD = bool_config('SECURE_HSTS_PRELOAD', default=IS_RENDER)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Django REST Framework: nenhuma rota da API fica aberta por padrao.
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAdminUser',
+    ],
+}

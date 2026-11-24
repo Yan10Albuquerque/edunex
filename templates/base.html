@@ -118,6 +118,33 @@
             font-size: 0.92rem;
         }
 
+        .visitor-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            padding: 0.85rem 1.25rem;
+            margin: -8px 0 24px;
+            border: 1px solid rgba(215, 166, 74, 0.45);
+            border-radius: var(--radius-md);
+            background: #fdf6e7;
+            color: var(--ink-800);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .visitor-banner > div {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+        }
+
+        .visitor-banner .bi {
+            color: var(--accent-500);
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
         .topbar-actions,
         .page-actions {
             display: flex;
@@ -609,16 +636,31 @@
                 </a>
                 <div class="topbar-actions">
                     <div class="user-chip">
-                        <i class="bi bi-person-circle"></i>
+                        <i class="bi {% if modo_visitante %}bi-eye{% else %}bi-person-circle{% endif %}"></i>
                         <div>
+                            {% if modo_visitante %}
+                            <small>Modo visitante</small>
+                            <strong>Dados fictícios</strong>
+                            {% else %}
                             <small>Conta conectada</small>
                             <strong>{{ user.username }}</strong>
+                            {% endif %}
                         </div>
                     </div>
                     <a class="ghost-link" href="{% url 'profile' %}"><i class="bi bi-sliders"></i> Perfil</a>
                     <a class="ghost-link" href="{% url 'logout' %}"><i class="bi bi-box-arrow-right"></i> Sair</a>
                 </div>
             </header>
+
+            {% if modo_visitante %}
+            <div class="visitor-banner" role="status">
+                <div>
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span><strong>Você está no modo visitante.</strong> Todos os dados são fictícios e serão apagados ao sair. Fique à vontade para cadastrar, editar e excluir.</span>
+                </div>
+                <a class="btn btn-sm btn-primary" href="{% url 'logout' %}?next=register">Criar minha conta</a>
+            </div>
+            {% endif %}
 
             <div class="workspace">
                 <aside class="sidebar-card">

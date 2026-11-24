@@ -42,27 +42,27 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label for="escola_nome" class="form-label">Nome da escola</label>
-                <input type="text" class="form-control" id="escola_nome" name="escola_nome" required>
+                <input type="text" class="form-control" id="escola_nome" name="escola_nome" maxlength="255" required value="{{ dados.escola_nome|default:'' }}">
             </div>
             <div class="mb-3">
                 <label for="username" class="form-label">Usuário</label>
-                <input type="text" class="form-control" id="username" name="username" required>
+                <input type="text" class="form-control" id="username" name="username" maxlength="150" autocomplete="username" required value="{{ dados.username|default:'' }}">
             </div>
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="email" name="email" required>
+                <input type="email" class="form-control" id="email" name="email" autocomplete="email" required value="{{ dados.email|default:'' }}">
             </div>
             <div class="mb-3">
                 <label for="telefone" class="form-label">Telefone</label>
-                <input type="tel" class="form-control" id="telefone" name="telefone">
+                <input type="tel" class="form-control" id="telefone" name="telefone" maxlength="20" value="{{ dados.telefone|default:'' }}">
             </div>
             <div class="mb-3">
                 <label for="password" class="form-label">Senha</label>
-                <input type="password" class="form-control" id="password" name="password" required>
+                <input type="password" class="form-control" id="password" name="password" autocomplete="new-password" required>
             </div>
             <div class="mb-3">
                 <label for="password_confirm" class="form-label">Confirmar senha</label>
-                <input type="password" class="form-control" id="password_confirm" name="password_confirm" required>
+                <input type="password" class="form-control" id="password_confirm" name="password_confirm" autocomplete="new-password" required>
             </div>
             <button type="submit" class="btn btn-primary w-100">Criar conta</button>
         </form>

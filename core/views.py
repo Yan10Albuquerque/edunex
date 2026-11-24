@@ -2,15 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from .forms import AlunoForm
 from .models import Aluno
+from .utils import exibir_erros_formulario
+from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.permissions import IsAdminUser
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
-from django.contrib.auth.models import User
 from .serializers import AlunoBulkSerializer
 from accounts.decorators import plano_profissional_required
-
 
 
 @login_required(login_url='login')
@@ -42,24 +43,16 @@ def aluno_create(request):
     """
     Criar novo aluno
     """
+    form = AlunoForm(request.POST or None, instance=Aluno(usuario=request.user))
+
     if request.method == 'POST':
-        nome = request.POST.get('nome')
-        responsavel = request.POST.get('responsavel')
-        telefone = request.POST.get('telefone')
-        email = request.POST.get('email', '')
-        
-        aluno = Aluno.objects.create(
-            usuario=request.user,
-            nome=nome,
-            responsavel=responsavel,
-            telefone=telefone,
-            email=email
-        )
-        
-        messages.success(request, f'Aluno {nome} cadastrado com sucesso!')
-        return redirect('alunos_list')
-    
-    return render(request, 'core/aluno_form.html')
+        if form.is_valid():
+            aluno = form.save()
+            messages.success(request, f'Aluno {aluno.nome} cadastrado com sucesso!')
+            return redirect('alunos_list')
+        exibir_erros_formulario(request, form)
+
+    return render(request, 'core/aluno_form.html', {'aluno': form.instance})
 
 
 @login_required(login_url='login')
@@ -69,19 +62,17 @@ def aluno_update(request, pk):
     Editar aluno
     """
     aluno = get_object_or_404(Aluno, pk=pk, usuario=request.user)
-    
+    form = AlunoForm(request.POST or None, instance=aluno)
+
     if request.method == 'POST':
-        aluno.nome = request.POST.get('nome', aluno.nome)
-        aluno.responsavel = request.POST.get('responsavel', aluno.responsavel)
-        aluno.telefone = request.POST.get('telefone', aluno.telefone)
-        aluno.email = request.POST.get('email', aluno.email)
-        aluno.save()
-        
-        messages.success(request, f'Aluno {aluno.nome} atualizado com sucesso!')
-        return redirect('alunos_list')
-    
+        if form.is_valid():
+            aluno = form.save()
+            messages.success(request, f'Aluno {aluno.nome} atualizado com sucesso!')
+            return redirect('alunos_list')
+        exibir_erros_formulario(request, form)
+
     context = {
-        'aluno': aluno,
+        'aluno': form.instance,
         'edit': True,
     }
     return render(request, 'core/aluno_form.html', context)
@@ -126,13 +117,19 @@ def aluno_detail(request, pk):
 ######### API ALUNOS #########
 
 class CadastroMassaAlunosView(APIView):
-    # 🔥 Isso ativa a tela no navegador
+    """
+    Importacao em massa de alunos (uso interno, apenas equipe/staff).
+    """
+    permission_classes = [IsAdminUser]
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def get(self, request):
         return Response({"message": "Use POST para enviar os dados"})
 
     def post(self, request):
+        if not isinstance(request.data, list):
+            return Response({"error": "Envie uma lista de alunos"}, status=400)
+
         serializer = AlunoBulkSerializer(data=request.data, many=True)
 
         if serializer.is_valid():
@@ -141,7 +138,8 @@ class CadastroMassaAlunosView(APIView):
                 for item in serializer.validated_data
             ]
 
-            Aluno.objects.bulk_create(alunos)
+            with transaction.atomic():
+                Aluno.objects.bulk_create(alunos)
 
             return Response(
                 {"message": f"{len(alunos)} alunos cadastrados com sucesso"},
