@@ -21,23 +21,19 @@
             <div class="row g-4">
                 <div class="col-md-6">
                     <label for="nome" class="form-label">Nome do aluno</label>
-                    <input type="text" class="form-control" id="nome" name="nome" required value="{% if edit %}{{ aluno.nome }}{% endif %}">
+                    <input type="text" class="form-control" id="nome" name="nome" required maxlength="255" value="{{ aluno.nome|default:'' }}">
                 </div>
                 <div class="col-md-6">
                     <label for="responsavel" class="form-label">Nome do responsável</label>
-                    <input type="text" class="form-control" id="responsavel" name="responsavel" required value="{% if edit %}{{ aluno.responsavel }}{% endif %}">
-                </div>
-                <div class="col-md-6">
-                    <label for="nascimento" class="form-label">Data de Nascimento</label>
-                    <input type="date" class="form-control" id="nascimento" name="nascimento" value="{% if edit %}{{ aluno.nascimento }}{% endif %}">
+                    <input type="text" class="form-control" id="responsavel" name="responsavel" required maxlength="255" value="{{ aluno.responsavel|default:'' }}">
                 </div>
                 <div class="col-md-6">
                     <label for="telefone" class="form-label">Telefone com WhatsApp</label>
-                    <input type="tel" class="form-control" id="telefone" name="telefone" required placeholder="(11) 99999-9999" value="{% if edit %}{{ aluno.telefone }}{% endif %}">
+                    <input type="tel" class="form-control" id="telefone" name="telefone" required maxlength="20" placeholder="(11) 99999-9999" value="{{ aluno.telefone|default:'' }}">
                 </div>
                 <div class="col-md-6">
                     <label for="email" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="email" name="email" placeholder="Opcional" value="{% if edit %}{{ aluno.email }}{% endif %}">
+                    <input type="email" class="form-control" id="email" name="email" placeholder="Opcional" value="{{ aluno.email|default:'' }}">
                 </div>
             </div>
 

@@ -38,12 +38,12 @@
 
                 <div class="col-md-6">
                     <label for="valor" class="form-label">Valor</label>
-                    <input type="number" class="form-control" id="valor" name="valor" step="0.01" required value="{% if edit %}{{ mensalidade.valor }}{% endif %}">
+                    <input type="number" class="form-control" id="valor" name="valor" step="0.01" min="0.01" required value="{{ mensalidade.valor|default_if_none:'' }}">
                 </div>
 
                 <div class="col-md-6">
                     <label for="data_vencimento" class="form-label">Data de vencimento</label>
-                    <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required value="{% if edit %}{{ mensalidade.data_vencimento|date:'Y-m-d' }}{% endif %}">
+                    <input type="date" class="form-control" id="data_vencimento" name="data_vencimento" required value="{{ mensalidade.data_vencimento|date:'Y-m-d' }}">
                 </div>
 
                 {% if edit %}
@@ -67,12 +67,12 @@
                 </div>
 
                 <div class="form-check mb-3">
-                    <input type="checkbox" class="form-check-input" id="recorrente" name="recorrente" {% if edit and mensalidade.recorrente %}checked{% elif not edit %}checked{% endif %}>
+                    <input type="checkbox" class="form-check-input" id="recorrente" name="recorrente" {% if not mensalidade or mensalidade.recorrente %}checked{% endif %}>
                     <label class="form-check-label" for="recorrente">Gerar próxima mensalidade automaticamente</label>
                 </div>
 
                 <label for="data_fim_recorrencia" class="form-label">Data final da recorrência</label>
-                <input type="date" class="form-control" id="data_fim_recorrencia" name="data_fim_recorrencia" value="{% if edit and mensalidade.data_fim_recorrencia %}{{ mensalidade.data_fim_recorrencia|date:'Y-m-d' }}{% endif %}">
+                <input type="date" class="form-control" id="data_fim_recorrencia" name="data_fim_recorrencia" value="{{ mensalidade.data_fim_recorrencia|date:'Y-m-d' }}">
                 <div class="form-text">Deixe vazio se a recorrência não tiver prazo de encerramento.</div>
             </div>
 

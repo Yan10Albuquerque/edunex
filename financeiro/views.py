@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -8,10 +9,13 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 from accounts.decorators import plano_profissional_required
-from .models import Mensalidade
 from core.models import Aluno
+from core.utils import exibir_erros_formulario
+from .forms import MensalidadeForm
+from .models import Mensalidade
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
 from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from .serializers import MensalidadeBulkSerializer
 
@@ -83,31 +87,20 @@ def dashboard(request):
     primeiro_dia = mes_selecionado
     ultimo_dia = (mes_selecionado + relativedelta(months=1)) - timedelta(days=1)
 
-    total_pendente = Mensalidade.objects.filter(
+    totais = Mensalidade.objects.filter(
         usuario=request.user,
         data_vencimento__gte=primeiro_dia,
         data_vencimento__lte=ultimo_dia,
-        status__in=['pendente', 'atrasado'],
-    ).aggregate(total=Sum('valor'))['total'] or 0
-
-    total_pago = Mensalidade.objects.filter(
-        usuario=request.user,
-        data_vencimento__gte=primeiro_dia,
-        data_vencimento__lte=ultimo_dia,
-        status='pago',
-    ).aggregate(total=Sum('valor'))['total'] or 0
-
-    total_atrasado = Mensalidade.objects.filter(
-        usuario=request.user,
-        data_vencimento__gte=primeiro_dia,
-        data_vencimento__lte=ultimo_dia,
-        status='atrasado',
-    ).aggregate(total=Sum('valor'))['total'] or 0
+    ).aggregate(
+        pendente=Sum('valor', filter=Q(status__in=['pendente', 'atrasado'])),
+        pago=Sum('valor', filter=Q(status='pago')),
+        atrasado=Sum('valor', filter=Q(status='atrasado')),
+    )
 
     context = {
-        'total_pendente': total_pendente,
-        'total_pago': total_pago,
-        'total_atrasado': total_atrasado,
+        'total_pendente': totais['pendente'] or 0,
+        'total_pago': totais['pago'] or 0,
+        'total_atrasado': totais['atrasado'] or 0,
         'mes_selecionado': mes_selecionado.strftime('%Y-%m'),
         'meses_disponiveis': _get_meses_disponiveis(mes_selecionado),
     }
@@ -170,39 +163,32 @@ def mensalidades_list(request):
 
 @login_required(login_url='login')
 @plano_profissional_required
-def mensalidade_create(request, aluno_id=None):
+def mensalidade_create(request):
     """
     Criar nova mensalidade
     """
-    aluno = None
-    if aluno_id:
-        aluno = get_object_or_404(Aluno, pk=aluno_id, usuario=request.user)
+    form = MensalidadeForm(
+        request.POST or None,
+        instance=Mensalidade(usuario=request.user),
+        usuario=request.user,
+    )
 
     if request.method == 'POST':
-        aluno_id = request.POST.get('aluno')
-        aluno = get_object_or_404(Aluno, pk=aluno_id, usuario=request.user)
-        valor = request.POST.get('valor')
-        data_vencimento = request.POST.get('data_vencimento')
-        recorrente = request.POST.get('recorrente') == 'on'
-        data_fim_recorrencia = request.POST.get('data_fim_recorrencia') or None
-
-        Mensalidade.objects.create(
-            usuario=request.user,
-            aluno=aluno,
-            valor=valor,
-            data_vencimento=data_vencimento,
-            recorrente=recorrente,
-            data_fim_recorrencia=data_fim_recorrencia,
-        )
-
-        messages.success(request, f'Mensalidade de {aluno.nome} cadastrada com sucesso!')
-        return redirect('mensalidades_list')
+        if form.is_valid():
+            mensalidade = form.save()
+            mensalidade.atualizar_status()
+            messages.success(request, f'Mensalidade de {mensalidade.aluno.nome} cadastrada com sucesso!')
+            return redirect('mensalidades_list')
+        exibir_erros_formulario(request, form)
 
     alunos = Aluno.objects.filter(usuario=request.user).order_by('nome')
+    aluno_id = request.POST.get('aluno') if form.is_bound else request.GET.get('aluno_id')
+    aluno_selecionado = alunos.filter(pk=aluno_id).first() if str(aluno_id or '').isdigit() else None
 
     context = {
         'alunos': alunos,
-        'aluno': aluno,
+        'aluno': aluno_selecionado,
+        'mensalidade': form.instance if form.is_bound else None,
     }
     return render(request, 'financeiro/mensalidade_form.html', context)
 
@@ -214,21 +200,30 @@ def mensalidade_update(request, pk):
     Editar mensalidade
     """
     mensalidade = get_object_or_404(Mensalidade, pk=pk, usuario=request.user)
+    status_anterior = mensalidade.status
+    form = MensalidadeForm(request.POST or None, instance=mensalidade, usuario=request.user, edit=True)
 
     if request.method == 'POST':
-        mensalidade.valor = request.POST.get('valor', mensalidade.valor)
-        mensalidade.data_vencimento = request.POST.get('data_vencimento', mensalidade.data_vencimento)
-        mensalidade.status = request.POST.get('status', mensalidade.status)
-        mensalidade.recorrente = request.POST.get('recorrente') == 'on'
-        data_fim = request.POST.get('data_fim_recorrencia') or None
-        mensalidade.data_fim_recorrencia = data_fim
-        mensalidade.save()
+        if form.is_valid():
+            with transaction.atomic():
+                mensalidade = form.save(commit=False)
+                novo_status = mensalidade.status
+                if novo_status == 'pago' and status_anterior != 'pago':
+                    # Mesmo fluxo do botao "Pagar": registra a data e gera a proxima recorrencia.
+                    mensalidade.marcar_como_pago()
+                elif novo_status != 'pago':
+                    mensalidade.data_pagamento = None
+                    mensalidade.save()
+                    mensalidade.atualizar_status()
+                else:
+                    mensalidade.save()
 
-        messages.success(request, 'Mensalidade atualizada com sucesso!')
-        return redirect('mensalidades_list')
+            messages.success(request, 'Mensalidade atualizada com sucesso!')
+            return redirect('mensalidades_list')
+        exibir_erros_formulario(request, form)
 
     context = {
-        'mensalidade': mensalidade,
+        'mensalidade': form.instance,
         'edit': True,
     }
     return render(request, 'financeiro/mensalidade_form.html', context)
@@ -299,7 +294,10 @@ def mensalidade_cobrar(request, pk):
 ######## API MENSALIDADES ########
 
 class CadastroMassaMensalidadeView(APIView):
-
+    """
+    Importacao em massa de mensalidades (uso interno, apenas equipe/staff).
+    """
+    permission_classes = [IsAdminUser]
     renderer_classes = [JSONRenderer, BrowsableAPIRenderer]
 
     def post(self, request):
@@ -320,7 +318,8 @@ class CadastroMassaMensalidadeView(APIView):
             for item in serializer.validated_data
         ]
 
-        Mensalidade.objects.bulk_create(mensalidades)
+        with transaction.atomic():
+            Mensalidade.objects.bulk_create(mensalidades)
 
         return Response(
             {"message": f"{len(mensalidades)} mensalidades cadastradas com sucesso"},
